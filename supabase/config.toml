@@ -1,0 +1,7 @@
+project_id = "mzmjufjvboptnabfjxdo"
+
+[functions.chat]
+verify_jwt = false
+
+[functions.analyze-cell]
+verify_jwt = false

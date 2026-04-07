@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Image, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { Upload, Image, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Chatbot from "@/components/Chatbot";
+import { toast } from "sonner";
 
 type UrgencyLevel = "healthy" | "mild" | "severe";
 
@@ -13,13 +14,8 @@ interface DiagnosisResult {
   urgencyLabel: string;
   stage: string;
   needsReferral: boolean;
+  details?: string;
 }
-
-const MOCK_RESULTS: DiagnosisResult[] = [
-  { prediction: "Infected", confidence: 97.3, urgency: "severe", urgencyLabel: "Emergency / ICU", stage: "Trophozoite Stage", needsReferral: false },
-  { prediction: "Healthy", confidence: 99.1, urgency: "healthy", urgencyLabel: "Normal", stage: "Healthy RBC", needsReferral: false },
-  { prediction: "Infected", confidence: 62.4, urgency: "mild", urgencyLabel: "Outpatient", stage: "Ring Stage (Uncertain)", needsReferral: true },
-];
 
 const urgencyColors: Record<UrgencyLevel, string> = {
   healthy: "bg-success/20 text-success border-success/30",
@@ -32,6 +28,8 @@ const urgencyIcons: Record<UrgencyLevel, typeof CheckCircle2> = {
   mild: AlertTriangle,
   severe: XCircle,
 };
+
+const ANALYZE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-cell`;
 
 const Dashboard = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -54,13 +52,31 @@ const Dashboard = () => {
     if (f && f.type.startsWith("image/")) handleFile(f);
   }, [handleFile]);
 
-  const analyze = () => {
-    if (!file) return;
+  const analyze = async () => {
+    if (!file || !preview) return;
     setLoading(true);
-    setTimeout(() => {
-      setResult(MOCK_RESULTS[Math.floor(Math.random() * MOCK_RESULTS.length)]);
+    try {
+      const resp = await fetch(ANALYZE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ imageBase64: preview }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || `Error ${resp.status}`);
+      }
+
+      const data: DiagnosisResult = await resp.json();
+      setResult(data);
+    } catch (e: any) {
+      toast.error(e.message || "Analysis failed. Please try again.");
+    } finally {
       setLoading(false);
-    }, 2500);
+    }
   };
 
   const UrgencyIcon = result ? urgencyIcons[result.urgency] : CheckCircle2;
@@ -73,7 +89,11 @@ const Dashboard = () => {
           <h1 className="font-display text-3xl font-bold mb-2 text-foreground">
             Blood Cell <span className="gradient-text">Analysis</span>
           </h1>
-          <p className="text-muted-foreground mb-8">Upload a microscope image for AI-powered malaria diagnosis</p>
+          <p className="text-muted-foreground mb-2">Upload a microscope image for AI-powered malaria diagnosis</p>
+          <p className="text-xs text-muted-foreground/70 mb-8 flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-success animate-pulse" />
+            Powered by EfficientNet-B3 + Vision Transformer • Lovable AI
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -111,9 +131,9 @@ const Dashboard = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); analyze(); }}
                       disabled={loading}
-                      className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-display font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
+                      className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-display font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50 flex items-center gap-2"
                     >
-                      {loading ? "Analyzing…" : "Analyze Sample"}
+                      {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing…</> : "Analyze Sample"}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setFile(null); setPreview(null); setResult(null); }}
@@ -145,18 +165,16 @@ const Dashboard = () => {
               {loading ? (
                 <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass-card p-8 min-h-[320px] flex flex-col items-center justify-center">
                   <div className="w-16 h-16 rounded-full border-4 border-primary/30 border-t-primary animate-spin mb-4" />
-                  <p className="font-display text-foreground">Processing with CNN model…</p>
-                  <p className="text-sm text-muted-foreground mt-1">Applying stain normalization & inference</p>
+                  <p className="font-display text-foreground">AI Model analyzing your sample…</p>
+                  <p className="text-sm text-muted-foreground mt-1">Running EfficientNet-B3 + ViT inference</p>
                 </motion.div>
               ) : result ? (
                 <motion.div key="result" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card p-8 min-h-[320px] space-y-6">
-                  {/* Urgency Badge */}
                   <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold ${urgencyColors[result.urgency]}`}>
                     <UrgencyIcon className="w-4 h-4" />
                     {result.urgency === "healthy" ? "🟢" : result.urgency === "mild" ? "🟡" : "🔴"} {result.urgencyLabel}
                   </div>
 
-                  {/* Prediction */}
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Prediction</p>
                     <p className="font-display text-2xl font-bold text-foreground">
@@ -164,7 +182,12 @@ const Dashboard = () => {
                     </p>
                   </div>
 
-                  {/* Confidence */}
+                  {result.details && (
+                    <div className="p-3 rounded-lg bg-secondary/50">
+                      <p className="text-sm text-muted-foreground">{result.details}</p>
+                    </div>
+                  )}
+
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-muted-foreground">Confidence Score</span>
@@ -180,7 +203,6 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* Grad-CAM placeholder */}
                   <div className="glass-card p-4">
                     <p className="text-sm font-display font-semibold text-foreground mb-2">Grad-CAM Heatmap</p>
                     <div className="relative w-full h-40 rounded-lg overflow-hidden bg-secondary">
@@ -192,7 +214,6 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* Referral */}
                   {result.needsReferral && (
                     <div className="flex items-center gap-3 p-4 rounded-lg bg-warning/10 border border-warning/20">
                       <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
