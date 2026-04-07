@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Malaria Insight AI
 
-TODO: Document your project here
+AI-powered malaria detection and analysis platform

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Zap, Shield, Brain } from "lucide-react";
+import { Zap, Shield, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImg from "@/assets/hero-cells.jpg";
 
@@ -43,7 +43,7 @@ const HeroSection = () => {
                 to="/dashboard"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-display font-semibold hover:brightness-110 transition-all glow-primary"
               >
-                Get Started <ArrowRight className="w-4 h-4" />
+                Get Started
               </Link>
               <Link
                 to="/about"
