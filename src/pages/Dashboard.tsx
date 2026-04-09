@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Image, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Upload, Image, AlertTriangle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Chatbot from "@/components/Chatbot";
 import { toast } from "sonner";
@@ -34,7 +34,6 @@ const ANALYZE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-c
 const Dashboard = () => {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [stainNorm, setStainNorm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DiagnosisResult | null>(null);
 
@@ -92,7 +91,7 @@ const Dashboard = () => {
           <p className="text-muted-foreground mb-2">Upload a microscope image for AI-powered malaria diagnosis</p>
           <p className="text-xs text-muted-foreground/70 mb-8 flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-full bg-success animate-pulse" />
-            Powered by EfficientNet-B3 + Vision Transformer • Lovable AI
+            Powered by EfficientNet-B3 + Vision Transformer
           </p>
         </motion.div>
 
@@ -112,20 +111,11 @@ const Dashboard = () => {
                   <img
                     src={preview}
                     alt="Uploaded cell"
-                    className={`max-h-64 mx-auto rounded-lg mb-4 ${stainNorm ? "saturate-[1.3] contrast-[1.1]" : ""}`}
+                    className="max-h-64 mx-auto rounded-lg mb-4"
                   />
                   <p className="text-sm text-muted-foreground mb-4">{file?.name}</p>
 
-                  <div className="flex items-center justify-center gap-3 mb-4">
-                    <span className="text-sm text-muted-foreground">Stain Normalization</span>
-                    <button onClick={(e) => { e.stopPropagation(); setStainNorm(!stainNorm); }}>
-                      {stainNorm ? (
-                        <ToggleRight className="w-8 h-8 text-primary" />
-                      ) : (
-                        <ToggleLeft className="w-8 h-8 text-muted-foreground" />
-                      )}
-                    </button>
-                  </div>
+
 
                   <div className="flex gap-3 justify-center">
                     <button
