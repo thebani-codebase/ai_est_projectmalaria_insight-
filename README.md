@@ -25,22 +25,30 @@ bun install
 
 ### Running Locally
 
+#### Development Server
 Start the development server:
 ```bash
 npm run dev
 # or
 bun run dev
 ```
+Available at: **[http://localhost:8080](http://localhost:8080)**
 
-The application will be available at:
-**[http://localhost:8080](http://localhost:8080)**
+#### Production Build
+Build and preview the production version:
+```bash
+npm run build
+npm run preview
+```
+The production application will be available at:
+**[http://localhost:4173](http://localhost:4173)**
 
 ### Available Commands
 
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server (http://localhost:8080)
 - `npm run build` - Build for production
 - `npm run build:dev` - Build in development mode
-- `npm run preview` - Preview production build
+- `npm run preview` - Preview production build (http://localhost:4173)
 - `npm run lint` - Run ESLint
 - `npm run test` - Run tests
 - `npm run test:watch` - Run tests in watch mode
